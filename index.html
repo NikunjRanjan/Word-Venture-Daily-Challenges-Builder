@@ -1,0 +1,1790 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Puzzle Builder</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      [data-theme="dark"] {
+        --bg: #0e0e12;
+        --surface: #16161e;
+        --surface2: #1e1e28;
+        --surface3: #252532;
+        --border: rgba(255, 255, 255, 0.08);
+        --border2: rgba(255, 255, 255, 0.14);
+        --text: #eeeef5;
+        --muted: #6b6b82;
+        --json-bg: #09090d;
+        --json-color: #7ec87e;
+        --tile-blk-bg: #0a0a0e;
+        --tile-blk-border: #333;
+        --spinner-hover: rgba(255, 255, 255, 0.06);
+      }
+      [data-theme="light"] {
+        --bg: #f4f4f8;
+        --surface: #ffffff;
+        --surface2: #f0f0f5;
+        --surface3: #e6e6ee;
+        --border: rgba(0, 0, 0, 0.08);
+        --border2: rgba(0, 0, 0, 0.15);
+        --text: #1a1a2e;
+        --muted: #8888a8;
+        --json-bg: #f8f8fc;
+        --json-color: #2a7a2a;
+        --tile-blk-bg: #d0d0d8;
+        --tile-blk-border: #bbb;
+        --spinner-hover: rgba(0, 0, 0, 0.05);
+      }
+      :root {
+        --accent: #f06a2a;
+        --accent-dim: rgba(240, 106, 42, 0.15);
+        --accent-glow: rgba(240, 106, 42, 0.35);
+        --green: #2dd4a0;
+        --green-dim: rgba(45, 212, 160, 0.12);
+        --blue: #4d9ef7;
+        --blue-dim: rgba(77, 158, 247, 0.12);
+        --red: #f05060;
+        --red-dim: rgba(240, 80, 96, 0.12);
+        --purple: #b07ef7;
+        --purple-dim: rgba(176, 126, 247, 0.12);
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Outfit", sans-serif;
+        min-height: 100vh;
+        transition:
+          background 0.25s,
+          color 0.25s;
+      }
+      [data-theme="dark"] body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background:
+          radial-gradient(
+            ellipse 50% 40% at 10% 0%,
+            rgba(240, 106, 42, 0.06) 0%,
+            transparent 60%
+          ),
+          radial-gradient(
+            ellipse 40% 30% at 90% 100%,
+            rgba(77, 158, 247, 0.05) 0%,
+            transparent 60%
+          );
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      .nav-dict-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 7px 14px;
+        border-radius: 7px;
+        font-family: "DM Mono", monospace;
+        font-size: 11px;
+        cursor: pointer;
+        background: var(--purple-dim);
+        border: 1px solid rgba(176, 126, 247, 0.3);
+        color: var(--purple);
+        transition:
+          background 0.15s,
+          border-color 0.15s;
+        white-space: nowrap;
+      }
+      .nav-dict-btn:hover {
+        background: rgba(176, 126, 247, 0.22);
+      }
+      .nav-dict-btn.loaded {
+        background: rgba(45, 212, 160, 0.12);
+        border-color: rgba(45, 212, 160, 0.35);
+        color: var(--green);
+      }
+
+      .theme-toggle {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        border: 1px solid var(--border2);
+        background: var(--surface2);
+        cursor: pointer;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition:
+          background 0.15s,
+          border-color 0.15s;
+      }
+      .theme-toggle:hover {
+        background: var(--surface3);
+      }
+      .page {
+        position: relative;
+        z-index: 1;
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 40px 24px 100px;
+      }
+      header {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--border2);
+        padding-bottom: 20px;
+        margin-bottom: 40px;
+      }
+      .logo {
+        font-family: "Bebas Neue", sans-serif;
+        font-size: 48px;
+        letter-spacing: 0.04em;
+        line-height: 1;
+        color: var(--text);
+      }
+      .logo em {
+        color: var(--accent);
+        font-style: normal;
+      }
+      .header-sub {
+        font-family: "DM Mono", monospace;
+        font-size: 10px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        padding-bottom: 8px;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        border: none;
+        border-radius: 7px;
+        font-family: "Outfit", sans-serif;
+        font-weight: 600;
+        font-size: 12px;
+        cursor: pointer;
+        padding: 8px 14px;
+        transition: all 0.15s;
+        white-space: nowrap;
+      }
+      .btn-ghost {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        color: var(--text);
+      }
+      .btn-ghost:hover {
+        border-color: var(--border2);
+        background: var(--surface3);
+      }
+      .btn-accent {
+        background: var(--accent);
+        color: #fff;
+        box-shadow: 0 0 20px var(--accent-glow);
+      }
+      .btn-accent:hover {
+        filter: brightness(1.1);
+        transform: translateY(-1px);
+      }
+      .btn-green {
+        background: rgba(45, 212, 160, 0.15);
+        border: 1px solid rgba(45, 212, 160, 0.3);
+        color: var(--green);
+      }
+      .btn-green:hover {
+        background: rgba(45, 212, 160, 0.22);
+      }
+      .btn-red {
+        background: var(--red-dim);
+        border: 1px solid rgba(240, 80, 96, 0.2);
+        color: var(--red);
+      }
+      .btn-red:hover {
+        background: rgba(240, 80, 96, 0.2);
+      }
+      .btn-blue {
+        background: var(--blue-dim);
+        border: 1px solid rgba(77, 158, 247, 0.25);
+        color: var(--blue);
+      }
+      .btn-blue:hover {
+        background: rgba(77, 158, 247, 0.2);
+      }
+      .btn-purple {
+        background: var(--purple-dim);
+        border: 1px solid rgba(176, 126, 247, 0.25);
+        color: var(--purple);
+      }
+      .btn-purple:hover {
+        background: rgba(176, 126, 247, 0.2);
+      }
+      .btn-sm {
+        padding: 5px 10px;
+        font-size: 11px;
+      }
+      .add-block-area {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 32px;
+      }
+      .add-block-btn {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 28px;
+        background: var(--surface);
+        border: 1.5px dashed var(--border2);
+        border-radius: 12px;
+        color: var(--muted);
+        font-family: "DM Mono", monospace;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-transform: uppercase;
+      }
+      .add-block-btn:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+        background: var(--accent-dim);
+      }
+      .add-block-btn svg {
+        transition: transform 0.2s;
+      }
+      .add-block-btn:hover svg {
+        transform: rotate(90deg);
+      }
+      .blocks {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+      .block {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        overflow: hidden;
+        transition: border-color 0.2s;
+      }
+      .block:hover {
+        border-color: var(--border2);
+      }
+      .block.has-grid {
+        border-color: rgba(240, 106, 42, 0.2);
+      }
+      .block-topbar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 18px;
+        background: var(--surface2);
+        border-bottom: 1px solid var(--border);
+      }
+      .block-num {
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
+        background: var(--surface3);
+        border: 1px solid var(--border2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: "DM Mono", monospace;
+        font-size: 11px;
+        color: var(--muted);
+        flex-shrink: 0;
+      }
+      .block-title {
+        flex: 1;
+        font-family: "DM Mono", monospace;
+        font-size: 11px;
+        color: var(--muted);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        letter-spacing: 0.06em;
+      }
+      .block-title.has-text {
+        color: var(--text);
+      }
+      .block-body {
+        padding: 20px;
+      }
+      .sentence-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+      textarea {
+        flex: 1;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 12px 14px;
+        font-size: 14px;
+        font-family: "Outfit", sans-serif;
+        color: var(--text);
+        resize: none;
+        height: 60px;
+        outline: none;
+        transition: border-color 0.15s;
+        line-height: 1.5;
+      }
+      textarea:focus {
+        border-color: rgba(240, 106, 42, 0.5);
+      }
+      textarea::placeholder {
+        color: var(--muted);
+      }
+      .word-tiles-label {
+        font-family: "DM Mono", monospace;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--muted);
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .word-tiles {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        min-height: 40px;
+        padding: 2px 0 12px;
+      }
+      .tile {
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-family: "DM Mono", monospace;
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: 0.06em;
+        cursor: pointer;
+        user-select: none;
+        transition: all 0.12s;
+        border: 1.5px solid var(--border);
+        background: var(--surface2);
+        color: var(--muted);
+        text-transform: uppercase;
+      }
+      .tile:hover {
+        border-color: var(--border2);
+        color: var(--text);
+        transform: translateY(-1px);
+      }
+      .tile.selected {
+        border-color: var(--accent);
+        background: var(--accent-dim);
+        color: var(--accent);
+        box-shadow: 0 0 0 1px rgba(240, 106, 42, 0.2);
+      }
+      .tile.blacked {
+        background: var(--tile-blk-bg);
+        border-color: var(--tile-blk-border);
+        color: var(--tile-blk-bg);
+      }
+      .tile.blacked:hover {
+        background: var(--tile-blk-bg);
+        border-color: var(--tile-blk-border);
+      }
+      .tile.blacked.selected {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 1px rgba(240, 106, 42, 0.3);
+      }
+      .tile-legend {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 14px;
+      }
+      .tile-leg-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-family: "DM Mono", monospace;
+        font-size: 10px;
+        color: var(--muted);
+      }
+      .leg-swatch {
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+        border: 1.5px solid var(--border2);
+      }
+      .leg-swatch.sel {
+        border-color: var(--accent);
+        background: var(--accent-dim);
+      }
+      .leg-swatch.blk {
+        background: var(--tile-blk-bg);
+        border-color: var(--tile-blk-border);
+      }
+      .dim-row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+        padding: 12px 14px;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        margin-bottom: 14px;
+      }
+      .dim-row-label {
+        font-family: "DM Mono", monospace;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--muted);
+        flex-shrink: 0;
+      }
+      .spinner {
+        display: flex;
+        align-items: center;
+        border: 1px solid var(--border2);
+        border-radius: 6px;
+        overflow: hidden;
+        background: var(--surface3);
+      }
+      .spinner button {
+        width: 26px;
+        height: 28px;
+        border: none;
+        background: transparent;
+        color: var(--text);
+        cursor: pointer;
+        font-size: 14px;
+        font-family: "DM Mono", monospace;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.1s;
+      }
+      .spinner button:hover {
+        background: var(--spinner-hover);
+      }
+      .spinner input {
+        width: 34px;
+        height: 28px;
+        border: none;
+        border-left: 1px solid var(--border);
+        border-right: 1px solid var(--border);
+        background: var(--surface3);
+        color: var(--text);
+        text-align: center;
+        font-family: "DM Mono", monospace;
+        font-size: 12px;
+        font-weight: 500;
+        outline: none;
+      }
+      .dim-x {
+        color: var(--muted);
+        font-family: "DM Mono", monospace;
+        font-size: 13px;
+      }
+      .dim-badge {
+        font-family: "Bebas Neue", sans-serif;
+        font-size: 20px;
+        letter-spacing: 0.05em;
+        color: var(--accent);
+      }
+      .auto-btn {
+        font-family: "DM Mono", monospace;
+        font-size: 10px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(45, 212, 160, 0.3);
+        background: rgba(45, 212, 160, 0.08);
+        color: var(--green);
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .auto-btn:hover {
+        background: rgba(45, 212, 160, 0.16);
+      }
+      .generate-btn-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin-bottom: 0;
+      }
+      .sel-count {
+        font-family: "DM Mono", monospace;
+        font-size: 11px;
+        color: var(--muted);
+        margin-right: auto;
+      }
+      .sel-count strong {
+        color: var(--accent);
+      }
+      .divider {
+        height: 1px;
+        background: var(--border);
+        margin: 20px -20px;
+      }
+      .grid-section {
+        margin-top: 0;
+      }
+      .grid-section-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 16px;
+      }
+      .grid-section-label {
+        font-family: "DM Mono", monospace;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--green);
+      }
+      .grid-section-header::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: rgba(45, 212, 160, 0.2);
+      }
+      .grid-and-legend {
+        display: flex;
+        gap: 24px;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+      }
+      .grid-wrap {
+        flex-shrink: 0;
+      }
+      .ws-grid {
+        display: inline-grid;
+        gap: 3px;
+        background: var(--surface3);
+        padding: 4px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+      }
+      .ws-cell {
+        width: 32px;
+        height: 32px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: "DM Mono", monospace;
+        font-size: 12px;
+        font-weight: 500;
+        background: var(--surface2);
+        color: var(--muted);
+        user-select: none;
+        transition: all 0.12s;
+      }
+      .ws-cell.hit {
+        color: #fff;
+      }
+      .ws-cell.glow {
+        transform: scale(1.12);
+        z-index: 2;
+        position: relative;
+      }
+      .word-pills {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 130px;
+      }
+      .word-pill {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 6px 10px;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        background: var(--surface2);
+        font-family: "DM Mono", monospace;
+        font-size: 11px;
+        cursor: pointer;
+        transition: all 0.12s;
+        user-select: none;
+      }
+      .word-pill:hover {
+        border-color: var(--border2);
+        transform: translateX(2px);
+      }
+      .word-pill.missed {
+        opacity: 0.3;
+        text-decoration: line-through;
+        cursor: default;
+      }
+      .pill-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .json-block {
+        background: var(--json-bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 14px;
+        font-family: "DM Mono", monospace;
+        font-size: 11px;
+        line-height: 1.75;
+        color: var(--json-color);
+        max-height: 220px;
+        overflow: auto;
+        white-space: pre;
+        scrollbar-width: thin;
+        scrollbar-color: #333 transparent;
+      }
+      .block-footer {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        padding: 12px 18px;
+        background: var(--surface2);
+        border-top: 1px solid var(--border);
+      }
+      .block-footer-label {
+        font-family: "DM Mono", monospace;
+        font-size: 10px;
+        color: var(--muted);
+        margin-right: auto;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+      }
+      .global-export {
+        background: var(--surface);
+        border: 1px solid rgba(45, 212, 160, 0.2);
+        border-radius: 14px;
+        overflow: hidden;
+        margin-top: 32px;
+      }
+      .global-export-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 20px;
+        background: rgba(45, 212, 160, 0.06);
+        border-bottom: 1px solid rgba(45, 212, 160, 0.15);
+      }
+      .global-export-title {
+        font-family: "DM Mono", monospace;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--green);
+      }
+      .global-json {
+        background: var(--json-bg);
+        padding: 16px;
+        font-family: "DM Mono", monospace;
+        font-size: 11px;
+        line-height: 1.75;
+        color: var(--json-color);
+        max-height: 360px;
+        overflow: auto;
+        white-space: pre;
+        scrollbar-width: thin;
+        scrollbar-color: #333 transparent;
+      }
+
+      /* ── Bonus Word Panel ── */
+      .bonus-section {
+        margin-top: 0;
+      }
+      .bonus-section-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+      .bonus-section-label {
+        font-family: "DM Mono", monospace;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--purple);
+      }
+      .bonus-section-header::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: rgba(176, 126, 247, 0.2);
+      }
+
+      .dict-upload-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        margin-bottom: 14px;
+        flex-wrap: wrap;
+      }
+      .dict-upload-bar label.upload-lbl {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 5px 12px;
+        border-radius: 6px;
+        font-family: "DM Mono", monospace;
+        font-size: 11px;
+        cursor: pointer;
+        background: var(--purple-dim);
+        border: 1px solid rgba(176, 126, 247, 0.25);
+        color: var(--purple);
+        transition: background 0.15s;
+      }
+      .dict-upload-bar label.upload-lbl:hover {
+        background: rgba(176, 126, 247, 0.2);
+      }
+      .dict-upload-bar input[type="file"] {
+        display: none;
+      }
+      .dict-status {
+        font-family: "DM Mono", monospace;
+        font-size: 10px;
+        color: var(--muted);
+      }
+      .dict-status.loaded {
+        color: var(--green);
+      }
+      .dict-only-toggle {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-family: "DM Mono", monospace;
+        font-size: 10px;
+        color: var(--muted);
+        cursor: pointer;
+        margin-left: auto;
+      }
+      .dict-only-toggle input {
+        accent-color: var(--purple);
+        cursor: pointer;
+      }
+
+      .bonus-search {
+        width: 100%;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        padding: 8px 12px;
+        font-family: "DM Mono", monospace;
+        font-size: 12px;
+        color: var(--text);
+        outline: none;
+        margin-bottom: 12px;
+        transition: border-color 0.15s;
+      }
+      .bonus-search:focus {
+        border-color: rgba(176, 126, 247, 0.5);
+      }
+      .bonus-search::placeholder {
+        color: var(--muted);
+      }
+
+      .bonus-two-col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      @media (max-width: 600px) {
+        .bonus-two-col {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .bonus-col-head {
+        font-family: "DM Mono", monospace;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .bonus-col-head .cnt {
+        font-size: 10px;
+        padding: 1px 6px;
+        border-radius: 999px;
+        background: var(--surface3);
+        border: 1px solid var(--border2);
+      }
+
+      .bonus-word-pool {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        min-height: 36px;
+        padding: 8px;
+        background: var(--surface3);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        max-height: 180px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: #333 transparent;
+      }
+      .bword {
+        padding: 4px 10px;
+        border-radius: 5px;
+        font-family: "DM Mono", monospace;
+        font-size: 11px;
+        cursor: pointer;
+        user-select: none;
+        transition: all 0.1s;
+        border: 1px solid transparent;
+      }
+      .bword:hover {
+        transform: scale(1.05);
+      }
+
+      .bword-active {
+        background: rgba(176, 126, 247, 0.2);
+        border-color: rgba(176, 126, 247, 0.4);
+        color: var(--purple);
+      }
+      .bword-active:hover {
+        background: rgba(176, 126, 247, 0.3);
+      }
+
+      .bword-possible {
+        background: var(--surface2);
+        border-color: var(--border);
+        color: var(--muted);
+      }
+      .bword-possible:hover {
+        border-color: var(--border2);
+        color: var(--text);
+      }
+      .bword-possible.in-bonus {
+        background: rgba(45, 212, 160, 0.15);
+        border-color: rgba(45, 212, 160, 0.35);
+        color: var(--green);
+      }
+      .bword-possible.blocked {
+        background: var(--surface3);
+        color: #333;
+        cursor: not-allowed;
+        text-decoration: line-through;
+        opacity: 0.5;
+        pointer-events: none;
+      }
+
+      @keyframes slideDown {
+        from {
+          opacity: 0;
+          transform: translateY(-8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .slide-down {
+        animation: slideDown 0.25s ease forwards;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      .fade-in {
+        animation: fadeIn 0.3s ease forwards;
+      }
+
+      .toast-bar {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--surface2);
+        border: 1px solid var(--border2);
+        border-radius: 8px;
+        padding: 8px 18px;
+        font-family: "DM Mono", monospace;
+        font-size: 11px;
+        color: var(--text);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s;
+        z-index: 999;
+        white-space: nowrap;
+      }
+      .toast-bar.show {
+        opacity: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- global dict file input hidden -->
+    <input
+      type="file"
+      id="globalDictFile"
+      accept=".json"
+      style="display: none"
+      onchange="loadGlobalDict(this)"
+    />
+    <div class="page">
+      <header>
+        <div>
+          <div class="logo">PUZZLE<em>.</em>BUILDER</div>
+        </div>
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 8px;
+          "
+        >
+          <label for="globalDictFile" class="nav-dict-btn" id="navDictBtn">
+            <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+              <path
+                d="M7 1v8M4 6l3 3 3-3M2 11h10"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <span id="navDictLabel">Upload Dictionary</span>
+          </label>
+          <button
+            class="theme-toggle"
+            id="themeToggle"
+            onclick="toggleTheme()"
+            title="Toggle light/dark mode"
+          >
+            <span id="themeIcon">☀️</span>
+          </button>
+        </div>
+      </header>
+
+      <div class="blocks" id="blocks"></div>
+
+      <div class="add-block-area">
+        <div class="add-block-btn" onclick="addBlock()">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path
+              d="M7 1v12M1 7h12"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+            />
+          </svg>
+          Add New Quote Block
+        </div>
+      </div>
+
+      <div class="global-export" id="globalExport" style="display: none">
+        <div class="global-export-header">
+          <span class="global-export-title">Full Export — All Quotes JSON</span>
+          <button class="btn btn-green btn-sm" onclick="copyGlobal()">
+            Copy All JSON
+          </button>
+        </div>
+        <div class="global-json" id="globalJson"></div>
+      </div>
+    </div>
+
+    <div class="toast-bar" id="toast"></div>
+
+    <script>
+      const PALETTE = [
+        "#f06a2a",
+        "#2dd4a0",
+        "#4d9ef7",
+        "#e07af0",
+        "#f0c040",
+        "#f05060",
+        "#60c060",
+        "#60b0f0",
+        "#f080a0",
+        "#80d0b0",
+      ];
+      const DIRS = [
+        { n: "EAST", x: 1, y: 0 },
+        { n: "WEST", x: -1, y: 0 },
+        { n: "SOUTH", x: 0, y: 1 },
+        { n: "NORTH", x: 0, y: -1 },
+        { n: "SOUTHEAST", x: 1, y: 1 },
+        { n: "SOUTHWEST", x: -1, y: 1 },
+        { n: "NORTHEAST", x: 1, y: -1 },
+        { n: "NORTHWEST", x: -1, y: -1 },
+      ];
+
+      let blocks = [];
+      let uid = 0;
+      let globalDict = null;
+
+      function loadGlobalDict(input) {
+        const file = input.files[0];
+        if (!file) return;
+        const r = new FileReader();
+        r.onload = () => {
+          try {
+            const raw = JSON.parse(r.result);
+            globalDict = new Set(Object.keys(raw).map((w) => w.toUpperCase()));
+            const btn = document.getElementById("navDictBtn");
+            const lbl = document.getElementById("navDictLabel");
+            if (btn) btn.classList.add("loaded");
+            if (lbl)
+              lbl.textContent =
+                globalDict.size.toLocaleString() + " words loaded";
+            blocks.forEach((b) => {
+              const st = document.getElementById("bdict-status-" + b.id);
+              if (st) {
+                st.textContent =
+                  globalDict.size.toLocaleString() + " words in dictionary";
+                st.style.color = "var(--green)";
+              }
+              renderBonusPanel(b);
+            });
+            showToast(
+              "Dictionary loaded — " +
+                globalDict.size.toLocaleString() +
+                " words",
+            );
+          } catch {
+            showToast("Invalid dictionary JSON");
+          }
+        };
+        r.readAsText(file);
+      }
+
+      function toggleTheme() {
+        const html = document.documentElement;
+        const isDark = html.getAttribute("data-theme") === "dark";
+        html.setAttribute("data-theme", isDark ? "light" : "dark");
+        document.getElementById("themeIcon").textContent = isDark ? "🌙" : "☀️";
+      }
+
+      function showToast(msg) {
+        const t = document.getElementById("toast");
+        t.textContent = msg;
+        t.classList.add("show");
+        clearTimeout(t._tm);
+        t._tm = setTimeout(() => t.classList.remove("show"), 2200);
+      }
+
+      function addBlock(sentence) {
+        const id = uid++;
+        const b = {
+          id,
+          sentence: sentence || "",
+          words: [],
+          states: [],
+          cols: 6,
+          rows: 7,
+          result: null,
+          json: null,
+          bonusWords: [],
+          dictOnly: false,
+          bonusSearch: "",
+        };
+        blocks.push(b);
+        renderBlock(b);
+        if (sentence) splitBlock(id, sentence);
+      }
+
+      function removeBlock(id) {
+        blocks = blocks.filter((b) => b.id !== id);
+        document.getElementById("blk-" + id)?.remove();
+        renumber();
+        refreshGlobal();
+      }
+
+      function renumber() {
+        blocks.forEach((b, i) => {
+          const el = document.querySelector("#blk-" + b.id + " .block-num");
+          if (el) el.textContent = i + 1;
+        });
+      }
+
+      function renderBlock(b) {
+        const idx = blocks.findIndex((x) => x.id === b.id);
+        const el = document.createElement("div");
+        el.className = "block slide-down";
+        el.id = "blk-" + b.id;
+        el.innerHTML = `
+    <div class="block-topbar">
+      <div class="block-num">${idx + 1}</div>
+      <div class="block-title" id="btitle-${b.id}">New quote block — enter sentence below</div>
+      <button class="btn btn-red btn-sm" onclick="removeBlock(${b.id})">✕ Remove</button>
+    </div>
+    <div class="block-body">
+      <div class="sentence-row">
+        <textarea id="bta-${b.id}" placeholder="Type a sentence or quote, then click Split →" oninput="onInput(${b.id})">${b.sentence}</textarea>
+        <button class="btn btn-ghost" onclick="splitBlock(${b.id})">Split →</button>
+      </div>
+      <div class="tile-legend">
+        <div class="tile-leg-item"><div class="leg-swatch sel"></div> Selected → placed in grid</div>
+        <div class="tile-leg-item"><div class="leg-swatch blk"></div> Blacked out</div>
+        <div class="tile-leg-item"><div class="leg-swatch"></div> Ignored</div>
+      </div>
+      <div class="word-tiles" id="btiles-${b.id}">
+        <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);">Split a sentence to see word tiles…</span>
+      </div>
+      <div class="dim-row">
+        <div class="dim-row-label">Grid Size</div>
+        <div class="spinner">
+          <button onclick="chDim(${b.id},'cols',-1)">−</button>
+          <input type="number" id="bcols-${b.id}" value="${b.cols}" min="4" max="16" oninput="syncDim(${b.id})"/>
+          <button onclick="chDim(${b.id},'cols',1)">+</button>
+        </div>
+        <span class="dim-x">×</span>
+        <div class="spinner">
+          <button onclick="chDim(${b.id},'rows',-1)">−</button>
+          <input type="number" id="brows-${b.id}" value="${b.rows}" min="4" max="16" oninput="syncDim(${b.id})"/>
+          <button onclick="chDim(${b.id},'rows',1)">+</button>
+        </div>
+        <div class="dim-badge" id="bdim-${b.id}">${b.cols} × ${b.rows}</div>
+        <div class="auto-btn" onclick="autoSize(${b.id})">⟳ Auto</div>
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);"><strong id="bcells-${b.id}">${b.cols * b.rows}</strong> cells</span>
+      </div>
+      <div class="generate-btn-row">
+        <span class="sel-count" id="bcount-${b.id}"><strong>0</strong> words selected</span>
+        <button class="btn btn-ghost btn-sm" onclick="regenBlock(${b.id})" id="bregen-${b.id}" style="display:none">⟳ Regenerate</button>
+        <button class="btn btn-accent" onclick="generateBlock(${b.id})">
+          <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+            <path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Generate Grid
+        </button>
+      </div>
+      <div id="bgrid-section-${b.id}" style="display:none">
+        <div class="divider"></div>
+        <div class="grid-section">
+          <div class="grid-section-header">
+            <div class="grid-section-label">Grid Output</div>
+          </div>
+          <div class="grid-and-legend">
+            <div class="grid-wrap">
+              <div class="ws-grid" id="bwsgrid-${b.id}"></div>
+            </div>
+            <div class="word-pills" id="bpills-${b.id}"></div>
+          </div>
+          <div class="json-block" id="bjson-${b.id}"></div>
+        </div>
+        <div class="divider"></div>
+        <div class="bonus-section">
+          <div class="bonus-section-header">
+            <div class="bonus-section-label">✦ Bonus Words</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+            <span class="dict-only-status" id="bdict-status-${b.id}" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)">No dictionary loaded — upload one in the top bar</span>
+            <label class="dict-only-toggle" style="margin-left:auto">
+              <input type="checkbox" id="bdictonly-${b.id}" onchange="toggleDictOnly(${b.id}, this)"/>
+              <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)">Dictionary only</span>
+            </label>
+          </div>
+          <input class="bonus-search" id="bbonus-search-${b.id}" placeholder="Search constructible words…" oninput="onBonusSearch(${b.id}, this)"/>
+          <div class="bonus-two-col">
+            <div>
+              <div class="bonus-col-head" style="color:var(--purple)">
+                Active Bonus Words
+                <span class="cnt" id="bbonus-cnt-${b.id}">0</span>
+              </div>
+              <div class="bonus-word-pool" id="bbonus-active-${b.id}"></div>
+            </div>
+            <div>
+              <div class="bonus-col-head" style="color:var(--muted)">
+                Constructible Words
+                <span class="cnt" id="bpossible-cnt-${b.id}">0</span>
+              </div>
+              <div class="bonus-word-pool" id="bbonus-possible-${b.id}"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="block-footer" id="bfooter-${b.id}" style="display:none">
+      <span class="block-footer-label" id="bfooter-label-${b.id}"></span>
+      <button class="btn btn-purple btn-sm" onclick="copyBlockJSON(${b.id})">Copy JSON</button>
+    </div>`;
+        document.getElementById("blocks").appendChild(el);
+        const ta = document.getElementById("bta-" + b.id);
+        ta.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            splitBlock(b.id);
+          }
+        });
+        if (globalDict) {
+          const st = document.getElementById("bdict-status-" + b.id);
+          if (st) {
+            st.textContent =
+              globalDict.size.toLocaleString() + " words in dictionary";
+            st.style.color = "var(--green)";
+          }
+        }
+      }
+
+      function onInput(id) {
+        const b = blocks.find((b) => b.id === id);
+        const ta = document.getElementById("bta-" + id);
+        if (b && ta) b.sentence = ta.value;
+      }
+
+      function splitBlock(id, force) {
+        const b = blocks.find((b) => b.id === id);
+        if (!b) return;
+        const ta = document.getElementById("bta-" + id);
+        const txt = (
+          force !== undefined ? force : ta ? ta.value.trim() : ""
+        ).trim();
+        if (!txt) return;
+        b.sentence = txt;
+        if (ta && force !== undefined) ta.value = txt;
+        b.words = txt.split(/\s+/).filter(Boolean);
+        b.states = b.words.map(() => "normal");
+        const title = document.getElementById("btitle-" + id);
+        if (title) {
+          title.textContent = txt.length > 60 ? txt.slice(0, 60) + "…" : txt;
+          title.classList.add("has-text");
+        }
+        renderTiles(b);
+        updateCount(b);
+      }
+
+      function renderTiles(b) {
+        const c = document.getElementById("btiles-" + b.id);
+        if (!c) return;
+        c.innerHTML = "";
+        b.words.forEach((w, i) => {
+          const t = document.createElement("div");
+          t.className = "tile";
+          t.textContent = w;
+          t.dataset.i = i;
+          applyTileState(t, b.states[i]);
+          t.addEventListener("click", () => cycleTile(b, i));
+          c.appendChild(t);
+        });
+      }
+
+      function applyTileState(t, state) {
+        t.classList.remove("selected", "blacked");
+        if (state === "selected") t.classList.add("selected");
+        if (state === "blacked") t.classList.add("blacked", "selected");
+      }
+
+      function cycleTile(b, i) {
+        const order = ["normal", "selected", "blacked"];
+        b.states[i] = order[(order.indexOf(b.states[i]) + 1) % 3];
+        const t = document.querySelector(
+          "#btiles-" + b.id + ' .tile[data-i="' + i + '"]',
+        );
+        if (t) applyTileState(t, b.states[i]);
+        updateCount(b);
+      }
+
+      function updateCount(b) {
+        const n = b.states.filter((s) => s === "selected").length;
+        const el = document.getElementById("bcount-" + b.id);
+        if (el)
+          el.innerHTML =
+            "<strong>" +
+            n +
+            "</strong> word" +
+            (n !== 1 ? "s" : "") +
+            " selected";
+      }
+
+      function chDim(id, which, d) {
+        const b = blocks.find((b) => b.id === id);
+        if (!b) return;
+        const inp = document.getElementById(
+          which === "cols" ? "bcols-" + id : "brows-" + id,
+        );
+        const v = Math.max(4, Math.min(16, parseInt(inp.value || 6) + d));
+        inp.value = v;
+        b[which] = v;
+        updateDimBadge(b);
+      }
+
+      function syncDim(id) {
+        const b = blocks.find((b) => b.id === id);
+        if (!b) return;
+        b.cols = Math.max(
+          4,
+          Math.min(
+            16,
+            parseInt(document.getElementById("bcols-" + id).value) || 6,
+          ),
+        );
+        b.rows = Math.max(
+          4,
+          Math.min(
+            16,
+            parseInt(document.getElementById("brows-" + id).value) || 7,
+          ),
+        );
+        updateDimBadge(b);
+      }
+
+      function updateDimBadge(b) {
+        const badge = document.getElementById("bdim-" + b.id);
+        if (badge) badge.textContent = b.cols + " × " + b.rows;
+        const cells = document.getElementById("bcells-" + b.id);
+        if (cells) cells.textContent = b.cols * b.rows;
+      }
+
+      function autoSize(id) {
+        const b = blocks.find((b) => b.id === id);
+        if (!b) return;
+        const sel = b.words
+          .filter((_, i) => b.states[i] === "selected")
+          .map((w) => w.replace(/[^a-zA-Z]/g, ""));
+        if (!sel.length) {
+          showToast("Select some words first.");
+          return;
+        }
+        const longest = Math.max(...sel.map((w) => w.length));
+        const total = sel.join("").length;
+        const dim = Math.max(longest + 1, Math.ceil(Math.sqrt(total * 2)));
+        b.cols = Math.max(5, Math.min(14, dim));
+        b.rows = Math.max(5, Math.min(14, Math.ceil(dim * 1.1)));
+        document.getElementById("bcols-" + id).value = b.cols;
+        document.getElementById("brows-" + id).value = b.rows;
+        updateDimBadge(b);
+      }
+
+      function rndLetter() {
+        return String.fromCharCode(65 + Math.floor(Math.random() * 26));
+      }
+
+      function canPlace(grid, word, sx, sy, dx, dy, rows, cols) {
+        for (let i = 0; i < word.length; i++) {
+          const x = sx + dx * i,
+            y = sy + dy * i;
+          if (x < 0 || y < 0 || x >= cols || y >= rows) return false;
+          if (grid[y][x] && grid[y][x] !== word[i]) return false;
+        }
+        return true;
+      }
+
+      function runGridGen(b) {
+        const selWords = b.words
+          .filter((_, i) => b.states[i] === "selected")
+          .map((w) => w.replace(/[^a-zA-Z]/g, "").toUpperCase())
+          .filter(Boolean);
+        const R = b.rows,
+          C = b.cols;
+        const grid = Array.from({ length: R }, () => Array(C).fill(""));
+        const cGrid = Array.from({ length: R }, () => Array(C).fill(null));
+        const placed = [],
+          failed = [],
+          wcm = {};
+        const sorted = selWords.slice().sort((a, b) => b.length - a.length);
+        for (let wi = 0; wi < sorted.length; wi++) {
+          const word = sorted[wi];
+          const color = PALETTE[wi % PALETTE.length];
+          let bestScore = -1,
+            bestP = null;
+          const dirs = DIRS.slice().sort(() => Math.random() - 0.5);
+          for (let a = 0; a < 700; a++) {
+            const dir = dirs[a % dirs.length];
+            const sx = Math.floor(Math.random() * C),
+              sy = Math.floor(Math.random() * R);
+            if (!canPlace(grid, word, sx, sy, dir.x, dir.y, R, C)) continue;
+            let cross = 0;
+            for (let ci = 0; ci < word.length; ci++) {
+              if (grid[sy + dir.y * ci][sx + dir.x * ci] === word[ci]) cross++;
+            }
+            const center =
+              1 - (Math.abs(sx - C / 2) + Math.abs(sy - R / 2)) / (C + R);
+            const score = cross * 3 + center + Math.random() * 0.6;
+            if (score > bestScore) {
+              bestScore = score;
+              bestP = { sx, sy, dir };
+            }
+            if (cross > 0 && a > 120) break;
+          }
+          if (bestP) {
+            const cells = [];
+            for (let i = 0; i < word.length; i++) {
+              const x = bestP.sx + bestP.dir.x * i,
+                y = bestP.sy + bestP.dir.y * i;
+              grid[y][x] = word[i];
+              if (!cGrid[y][x]) cGrid[y][x] = color;
+              cells.push(y * C + x);
+            }
+            wcm[word] = { cells, color };
+            placed.push({
+              word,
+              sx: bestP.sx,
+              sy: bestP.sy,
+              dir: bestP.dir,
+              color,
+            });
+          } else {
+            failed.push(word);
+          }
+        }
+        for (let y = 0; y < R; y++)
+          for (let x = 0; x < C; x++) if (!grid[y][x]) grid[y][x] = rndLetter();
+        return { grid, cGrid, placed, failed, wcm };
+      }
+
+      function generateBlock(id) {
+        const b = blocks.find((b) => b.id === id);
+        if (!b) return;
+        if (!b.states.some((s) => s === "selected")) {
+          showToast("Select at least one word first.");
+          return;
+        }
+        const res = runGridGen(b);
+        b.result = res;
+        buildBlockJSON(b);
+        renderBlockGrid(b);
+        document.getElementById("bgrid-section-" + id).style.display = "";
+        document.getElementById("bgrid-section-" + id).classList.add("fade-in");
+        document.getElementById("bfooter-" + id).style.display = "";
+        document.getElementById("bregen-" + id).style.display = "";
+        document.getElementById("blk-" + id).classList.add("has-grid");
+        renderBonusPanel(b);
+        refreshGlobal();
+      }
+
+      function regenBlock(id) {
+        const b = blocks.find((b) => b.id === id);
+        if (!b || !b.states.some((s) => s === "selected")) return;
+        const res = runGridGen(b);
+        b.result = res;
+        buildBlockJSON(b);
+        renderBlockGrid(b);
+        renderBonusPanel(b);
+        refreshGlobal();
+      }
+
+      function renderBlockGrid(b) {
+        const id = b.id;
+        const { grid, cGrid, placed, failed, wcm } = b.result;
+        const R = b.rows,
+          C = b.cols;
+        const gridEl = document.getElementById("bwsgrid-" + id);
+        gridEl.style.gridTemplateColumns = "repeat(" + C + ", 32px)";
+        gridEl.innerHTML = "";
+        for (let y = 0; y < R; y++) {
+          for (let x = 0; x < C; x++) {
+            const cell = document.createElement("div");
+            cell.className = "ws-cell";
+            cell.dataset.idx = y * C + x;
+            cell.textContent = grid[y][x];
+            if (cGrid[y][x]) {
+              cell.classList.add("hit");
+              cell.style.background = cGrid[y][x] + "28";
+              cell.style.color = cGrid[y][x];
+            }
+            gridEl.appendChild(cell);
+          }
+        }
+        const pillsEl = document.getElementById("bpills-" + id);
+        pillsEl.innerHTML = "";
+        placed.forEach((p) => {
+          const pill = document.createElement("div");
+          pill.className = "word-pill";
+          pill.style.borderLeftWidth = "3px";
+          pill.style.borderLeftColor = p.color;
+          pill.innerHTML =
+            '<div class="pill-dot" style="background:' +
+            p.color +
+            '"></div><span style="color:' +
+            p.color +
+            '">' +
+            p.word +
+            "</span>";
+          pill.addEventListener("mouseenter", () =>
+            hlCell(id, p.word, wcm, true),
+          );
+          pill.addEventListener("mouseleave", () =>
+            hlCell(id, p.word, wcm, false),
+          );
+          pillsEl.appendChild(pill);
+        });
+        failed.forEach((w) => {
+          const pill = document.createElement("div");
+          pill.className = "word-pill missed";
+          pill.innerHTML =
+            '<div class="pill-dot" style="background:#333"></div><span>' +
+            w +
+            " ✕ (grid too small)</span>";
+          pillsEl.appendChild(pill);
+        });
+        const lbl = document.getElementById("bfooter-label-" + id);
+        if (lbl)
+          lbl.textContent =
+            placed.length +
+            " words placed · " +
+            (failed.length ? failed.length + " failed" : "all success");
+      }
+
+      function hlCell(id, word, wcm, on) {
+        const info = wcm[word];
+        if (!info) return;
+        const c = info.color;
+        info.cells.forEach((idx) => {
+          const cell = document.querySelector(
+            "#bwsgrid-" + id + ' .ws-cell[data-idx="' + idx + '"]',
+          );
+          if (!cell) return;
+          if (on) {
+            cell.classList.add("glow");
+            cell.style.background = c + "60";
+            cell.style.color = "#fff";
+            cell.style.boxShadow = "0 0 12px " + c + "88";
+          } else {
+            cell.classList.remove("glow");
+            cell.style.background = c + "28";
+            cell.style.color = c;
+            cell.style.boxShadow = "";
+          }
+        });
+      }
+
+      function buildBlockJSON(b) {
+        const { grid, placed } = b.result;
+        const blackedIdxs = b.states
+          .map((s, i) => (s === "blacked" ? i : -1))
+          .filter((i) => i >= 0);
+        const quoteIndex = placed.map((p) => {
+          const oi = b.words.findIndex(
+            (w) => w.replace(/[^a-zA-Z]/g, "").toUpperCase() === p.word,
+          );
+          return { index: oi + 1, x: p.sx, y: p.sy, direction: p.dir.n };
+        });
+        const obj = {
+          quote_array: b.words,
+          blacked_indices: blackedIdxs,
+          grid: grid.map((r) => ({ letters: r })),
+          quote_index: quoteIndex,
+          bonusWords: b.bonusWords.slice(),
+        };
+        b.json = obj;
+        const el = document.getElementById("bjson-" + b.id);
+        if (el) el.textContent = JSON.stringify(obj, null, 2);
+      }
+
+      /* ── Bonus Word Logic ── */
+
+      function getConstructibleWords(grid, rows, cols) {
+        const found = new Set();
+        const dirs = [
+          [1, 0],
+          [-1, 0],
+          [0, 1],
+          [0, -1],
+          [1, 1],
+          [-1, -1],
+          [1, -1],
+          [-1, 1],
+        ];
+        for (let y = 0; y < rows; y++) {
+          for (let x = 0; x < cols; x++) {
+            for (const [dx, dy] of dirs) {
+              let cx = x,
+                cy = y,
+                word = "";
+              while (cx >= 0 && cy >= 0 && cx < cols && cy < rows) {
+                word += String(grid[cy][cx]).charAt(0).toUpperCase();
+                if (word.length >= 3) found.add(word);
+                cx += dx;
+                cy += dy;
+              }
+            }
+          }
+        }
+        return found;
+      }
+
+      function getBlockedWords(b) {
+        const blocked = new Set();
+        b.words.forEach((w) => {
+          const t = w.replace(/[^a-zA-Z]/g, "").toUpperCase();
+          blocked.add(t);
+          blocked.add(t.split("").reverse().join(""));
+        });
+        return blocked;
+      }
+
+      function toggleDictOnly(id, cb) {
+        const b = blocks.find((b) => b.id === id);
+        if (!b) return;
+        b.dictOnly = cb.checked;
+        renderBonusPanel(b);
+      }
+
+      function onBonusSearch(id, inp) {
+        const b = blocks.find((b) => b.id === id);
+        if (!b) return;
+        b.bonusSearch = inp.value.toUpperCase().trim();
+        renderBonusPanel(b);
+      }
+
+      function renderBonusPanel(b) {
+        if (!b.result) return;
+        const id = b.id;
+        const { grid } = b.result;
+        const R = b.rows,
+          C = b.cols;
+        const constructible = getConstructibleWords(grid, R, C);
+        const blocked = getBlockedWords(b);
+        const bonusSet = new Set(b.bonusWords.map((w) => w.toUpperCase()));
+        const search = b.bonusSearch || "";
+        const dictOnly = b.dictOnly;
+        const dict = globalDict;
+
+        const activeEl = document.getElementById("bbonus-active-" + id);
+        const possibleEl = document.getElementById("bbonus-possible-" + id);
+        const cntActive = document.getElementById("bbonus-cnt-" + id);
+        const cntPossible = document.getElementById("bpossible-cnt-" + id);
+
+        activeEl.innerHTML = "";
+        b.bonusWords.forEach((word, i) => {
+          const isValid = constructible.has(word.toUpperCase());
+          const d = document.createElement("div");
+          d.className = "bword bword-active";
+          d.textContent = word + (isValid ? "" : " ✕");
+          d.title = isValid
+            ? "Click to remove"
+            : "Not constructible from grid — click to remove";
+          if (!isValid) d.style.opacity = "0.5";
+          d.onclick = () => {
+            b.bonusWords.splice(i, 1);
+            buildBlockJSON(b);
+            renderBonusPanel(b);
+            refreshGlobal();
+          };
+          d.addEventListener("auxclick", (e) => {
+            if (e.button === 1) {
+              e.preventDefault();
+              window.open(
+                "https://www.dictionary.com/browse/" + word.toLowerCase(),
+                "_blank",
+              );
+            }
+          });
+          d.addEventListener("contextmenu", (e) => {
+            e.preventDefault();
+            window.open(
+              "https://www.dictionary.com/browse/" + word.toLowerCase(),
+              "_blank",
+            );
+          });
+          activeEl.appendChild(d);
+        });
+        if (cntActive) cntActive.textContent = b.bonusWords.length;
+
+        let possible = Array.from(constructible)
+          .filter((w) => {
+            if (blocked.has(w)) return false;
+            if (search && !w.includes(search)) return false;
+            if (dictOnly && dict && !dict.has(w)) return false;
+            return true;
+          })
+          .sort();
+
+        if (cntPossible) cntPossible.textContent = possible.length;
+
+        possibleEl.innerHTML = "";
+        possible.forEach((word) => {
+          const inBonus = bonusSet.has(word);
+          const d = document.createElement("div");
+          d.className = "bword bword-possible" + (inBonus ? " in-bonus" : "");
+          d.textContent = word;
+          d.title = inBonus
+            ? "In bonus words — click to remove"
+            : "Click to add as bonus word";
+          d.onclick = () => {
+            const idx = b.bonusWords.findIndex(
+              (bw) => bw.toUpperCase() === word,
+            );
+            if (idx > -1) {
+              b.bonusWords.splice(idx, 1);
+            } else {
+              b.bonusWords.push(word);
+            }
+            buildBlockJSON(b);
+            renderBonusPanel(b);
+            refreshGlobal();
+          };
+          d.addEventListener("auxclick", (e) => {
+            if (e.button === 1) {
+              e.preventDefault();
+              window.open(
+                "https://www.dictionary.com/browse/" + word.toLowerCase(),
+                "_blank",
+              );
+            }
+          });
+          d.addEventListener("contextmenu", (e) => {
+            e.preventDefault();
+            window.open(
+              "https://www.dictionary.com/browse/" + word.toLowerCase(),
+              "_blank",
+            );
+          });
+          possibleEl.appendChild(d);
+        });
+      }
+
+      function copyBlockJSON(id) {
+        const b = blocks.find((b) => b.id === id);
+        if (!b || !b.json) return;
+        navigator.clipboard
+          .writeText(JSON.stringify(b.json, null, 2))
+          .then(() => {
+            showToast("JSON copied!");
+          });
+      }
+
+      function refreshGlobal() {
+        const all = blocks.filter((b) => b.json).map((b) => b.json);
+        if (!all.length) {
+          document.getElementById("globalExport").style.display = "none";
+          return;
+        }
+        document.getElementById("globalExport").style.display = "";
+        document.getElementById("globalJson").textContent = JSON.stringify(
+          { data: all },
+          null,
+          2,
+        );
+      }
+
+      function copyGlobal() {
+        const all = blocks.filter((b) => b.json).map((b) => b.json);
+        navigator.clipboard
+          .writeText(JSON.stringify({ data: all }, null, 2))
+          .then(() => showToast("All JSON copied!"));
+      }
+
+      addBlock(
+        "The nice thing about being a celebrity is that when you bore people they think it's their fault",
+      );
+      addBlock();
+    </script>
+  </body>
+</html>
