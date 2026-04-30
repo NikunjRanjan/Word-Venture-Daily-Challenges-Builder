@@ -87,7 +87,6 @@
         pointer-events: none;
         z-index: 0;
       }
-
       .nav-dict-btn {
         display: inline-flex;
         align-items: center;
@@ -113,7 +112,26 @@
         border-color: rgba(45, 212, 160, 0.35);
         color: var(--green);
       }
-
+      .nav-json-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 7px 14px;
+        border-radius: 7px;
+        font-family: "DM Mono", monospace;
+        font-size: 11px;
+        cursor: pointer;
+        background: var(--blue-dim);
+        border: 1px solid rgba(77, 158, 247, 0.3);
+        color: var(--blue);
+        transition:
+          background 0.15s,
+          border-color 0.15s;
+        white-space: nowrap;
+      }
+      .nav-json-btn:hover {
+        background: rgba(77, 158, 247, 0.22);
+      }
       .theme-toggle {
         width: 36px;
         height: 36px;
@@ -157,14 +175,6 @@
       .logo em {
         color: var(--accent);
         font-style: normal;
-      }
-      .header-sub {
-        font-family: "DM Mono", monospace;
-        font-size: 10px;
-        color: var(--muted);
-        text-transform: uppercase;
-        letter-spacing: 0.15em;
-        padding-bottom: 8px;
       }
       .btn {
         display: inline-flex;
@@ -348,17 +358,6 @@
       }
       textarea::placeholder {
         color: var(--muted);
-      }
-      .word-tiles-label {
-        font-family: "DM Mono", monospace;
-        font-size: 10px;
-        text-transform: uppercase;
-        letter-spacing: 0.14em;
-        color: var(--muted);
-        margin-bottom: 10px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
       }
       .word-tiles {
         display: flex;
@@ -701,8 +700,6 @@
         scrollbar-width: thin;
         scrollbar-color: #333 transparent;
       }
-
-      /* ── Bonus Word Panel ── */
       .bonus-section {
         margin-top: 0;
       }
@@ -725,46 +722,6 @@
         height: 1px;
         background: rgba(176, 126, 247, 0.2);
       }
-
-      .dict-upload-bar {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 10px 14px;
-        background: var(--surface2);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        margin-bottom: 14px;
-        flex-wrap: wrap;
-      }
-      .dict-upload-bar label.upload-lbl {
-        display: inline-flex;
-        align-items: center;
-        gap: 7px;
-        padding: 5px 12px;
-        border-radius: 6px;
-        font-family: "DM Mono", monospace;
-        font-size: 11px;
-        cursor: pointer;
-        background: var(--purple-dim);
-        border: 1px solid rgba(176, 126, 247, 0.25);
-        color: var(--purple);
-        transition: background 0.15s;
-      }
-      .dict-upload-bar label.upload-lbl:hover {
-        background: rgba(176, 126, 247, 0.2);
-      }
-      .dict-upload-bar input[type="file"] {
-        display: none;
-      }
-      .dict-status {
-        font-family: "DM Mono", monospace;
-        font-size: 10px;
-        color: var(--muted);
-      }
-      .dict-status.loaded {
-        color: var(--green);
-      }
       .dict-only-toggle {
         display: flex;
         align-items: center;
@@ -779,7 +736,6 @@
         accent-color: var(--purple);
         cursor: pointer;
       }
-
       .bonus-search {
         width: 100%;
         background: var(--surface2);
@@ -799,7 +755,6 @@
       .bonus-search::placeholder {
         color: var(--muted);
       }
-
       .bonus-two-col {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -810,7 +765,6 @@
           grid-template-columns: 1fr;
         }
       }
-
       .bonus-col-head {
         font-family: "DM Mono", monospace;
         font-size: 10px;
@@ -828,7 +782,6 @@
         background: var(--surface3);
         border: 1px solid var(--border2);
       }
-
       .bonus-word-pool {
         display: flex;
         flex-wrap: wrap;
@@ -856,7 +809,6 @@
       .bword:hover {
         transform: scale(1.05);
       }
-
       .bword-active {
         background: rgba(176, 126, 247, 0.2);
         border-color: rgba(176, 126, 247, 0.4);
@@ -865,7 +817,6 @@
       .bword-active:hover {
         background: rgba(176, 126, 247, 0.3);
       }
-
       .bword-possible {
         background: var(--surface2);
         border-color: var(--border);
@@ -888,7 +839,6 @@
         opacity: 0.5;
         pointer-events: none;
       }
-
       @keyframes slideDown {
         from {
           opacity: 0;
@@ -913,7 +863,6 @@
       .fade-in {
         animation: fadeIn 0.3s ease forwards;
       }
-
       .toast-bar {
         position: fixed;
         bottom: 24px;
@@ -938,13 +887,19 @@
     </style>
   </head>
   <body>
-    <!-- global dict file input hidden -->
     <input
       type="file"
       id="globalDictFile"
       accept=".json"
       style="display: none"
       onchange="loadGlobalDict(this)"
+    />
+    <input
+      type="file"
+      id="globalImportFile"
+      accept=".json"
+      style="display: none"
+      onchange="importJSON(this)"
     />
     <div class="page">
       <header>
@@ -959,6 +914,22 @@
             padding-bottom: 8px;
           "
         >
+          <label
+            for="globalImportFile"
+            class="nav-json-btn"
+            title="Import a previously exported puzzle JSON"
+          >
+            <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+              <path
+                d="M7 11V3M4 6l3-3 3 3M2 11h10"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            Import JSON
+          </label>
           <label for="globalDictFile" class="nav-dict-btn" id="navDictBtn">
             <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
               <path
@@ -1072,6 +1043,125 @@
           }
         };
         r.readAsText(file);
+        input.value = "";
+      }
+
+      function importJSON(input) {
+        const file = input.files[0];
+        if (!file) return;
+        const r = new FileReader();
+        r.onload = () => {
+          try {
+            const parsed = JSON.parse(r.result);
+            const items = parsed.data
+              ? parsed.data
+              : Array.isArray(parsed)
+                ? parsed
+                : [parsed];
+            if (!items.length) {
+              showToast("No puzzle data found in JSON");
+              return;
+            }
+            items.forEach((item) => importBlock(item));
+            showToast(
+              "Imported " +
+                items.length +
+                " block" +
+                (items.length !== 1 ? "s" : "") +
+                " from JSON",
+            );
+          } catch (e) {
+            showToast("Invalid JSON file");
+          }
+        };
+        r.readAsText(file);
+        input.value = "";
+      }
+
+      function importBlock(item) {
+        const id = uid++;
+        const quoteArr = item.quote_array || [];
+        const sentence = quoteArr.join(" ");
+        const rows = item.grid ? item.grid.length : 7;
+        const cols =
+          item.grid && item.grid[0] ? item.grid[0].letters.length : 6;
+
+        const states = quoteArr.map((_, i) => {
+          const blackedIdxs = item.blacked_indices || [];
+          if (blackedIdxs.includes(i)) return "blacked";
+          const inQuoteIndex = (item.quote_index || []).some(
+            (q) => q.index === i,
+          );
+          return inQuoteIndex ? "selected" : "normal";
+        });
+
+        const grid = item.grid ? item.grid.map((r) => r.letters) : null;
+
+        const cGrid = grid
+          ? Array.from({ length: rows }, () => Array(cols).fill(null))
+          : null;
+        const placed = [];
+        const wcm = {};
+
+        if (grid && item.quote_index) {
+          item.quote_index.forEach((qi, wi) => {
+            const wordRaw = quoteArr[qi.index];
+            if (!wordRaw) return;
+            const word = wordRaw.replace(/[^a-zA-Z]/g, "").toUpperCase();
+            const color = PALETTE[wi % PALETTE.length];
+            const dir = DIRS.find((d) => d.n === qi.direction) || DIRS[0];
+            const cells = [];
+            for (let i = 0; i < word.length; i++) {
+              const x = qi.x + dir.x * i;
+              const y = qi.y + dir.y * i;
+              if (y >= 0 && y < rows && x >= 0 && x < cols) {
+                if (cGrid[y][x] === null) cGrid[y][x] = color;
+                cells.push(y * cols + x);
+              }
+            }
+            wcm[word] = { cells, color };
+            placed.push({ word, sx: qi.x, sy: qi.y, dir, color });
+          });
+        }
+
+        const b = {
+          id,
+          sentence,
+          words: quoteArr,
+          states,
+          cols,
+          rows,
+          result: grid ? { grid, cGrid, placed, failed: [], wcm } : null,
+          json: null,
+          bonusWords: item.bonusWords || [],
+          dictOnly: false,
+          bonusSearch: "",
+        };
+        blocks.push(b);
+        renderBlock(b);
+
+        const ta = document.getElementById("bta-" + id);
+        if (ta) ta.value = sentence;
+        const title = document.getElementById("btitle-" + id);
+        if (title) {
+          title.textContent =
+            sentence.length > 60 ? sentence.slice(0, 60) + "…" : sentence;
+          title.classList.add("has-text");
+        }
+        renderTiles(b);
+        updateCount(b);
+
+        if (b.result) {
+          buildBlockJSON(b);
+          renderBlockGrid(b);
+          document.getElementById("bgrid-section-" + id).style.display = "";
+          document.getElementById("bfooter-" + id).style.display = "";
+          document.getElementById("bregen-" + id).style.display = "";
+          document.getElementById("blk-" + id).classList.add("has-grid");
+          renderBonusPanel(b);
+        }
+
+        refreshGlobal();
       }
 
       function toggleTheme() {
@@ -1136,7 +1226,7 @@
     </div>
     <div class="block-body">
       <div class="sentence-row">
-        <textarea id="bta-${b.id}" placeholder="Type a sentence or quote, then click Split →" oninput="onInput(${b.id})">${b.sentence}</textarea>
+        <textarea id="bta-${b.id}" placeholder="Type a sentence or quote, then click Split →" oninput="onInput(${b.id})"></textarea>
         <button class="btn btn-ghost" onclick="splitBlock(${b.id})">Split →</button>
       </div>
       <div class="tile-legend">
@@ -1177,43 +1267,31 @@
       <div id="bgrid-section-${b.id}" style="display:none">
         <div class="divider"></div>
         <div class="grid-section">
-          <div class="grid-section-header">
-            <div class="grid-section-label">Grid Output</div>
-          </div>
+          <div class="grid-section-header"><div class="grid-section-label">Grid Output</div></div>
           <div class="grid-and-legend">
-            <div class="grid-wrap">
-              <div class="ws-grid" id="bwsgrid-${b.id}"></div>
-            </div>
+            <div class="grid-wrap"><div class="ws-grid" id="bwsgrid-${b.id}"></div></div>
             <div class="word-pills" id="bpills-${b.id}"></div>
           </div>
           <div class="json-block" id="bjson-${b.id}"></div>
         </div>
         <div class="divider"></div>
         <div class="bonus-section">
-          <div class="bonus-section-header">
-            <div class="bonus-section-label">✦ Bonus Words</div>
-          </div>
+          <div class="bonus-section-header"><div class="bonus-section-label">✦ Bonus Words</div></div>
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
-            <span class="dict-only-status" id="bdict-status-${b.id}" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)">No dictionary loaded — upload one in the top bar</span>
+            <span id="bdict-status-${b.id}" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)">No dictionary loaded — upload one in the top bar</span>
             <label class="dict-only-toggle" style="margin-left:auto">
-              <input type="checkbox" id="bdictonly-${b.id}" onchange="toggleDictOnly(${b.id}, this)"/>
+              <input type="checkbox" id="bdictonly-${b.id}" onchange="toggleDictOnly(${b.id},this)"/>
               <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)">Dictionary only</span>
             </label>
           </div>
-          <input class="bonus-search" id="bbonus-search-${b.id}" placeholder="Search constructible words…" oninput="onBonusSearch(${b.id}, this)"/>
+          <input class="bonus-search" id="bbonus-search-${b.id}" placeholder="Search constructible words…" oninput="onBonusSearch(${b.id},this)"/>
           <div class="bonus-two-col">
             <div>
-              <div class="bonus-col-head" style="color:var(--purple)">
-                Active Bonus Words
-                <span class="cnt" id="bbonus-cnt-${b.id}">0</span>
-              </div>
+              <div class="bonus-col-head" style="color:var(--purple)">Active Bonus Words <span class="cnt" id="bbonus-cnt-${b.id}">0</span></div>
               <div class="bonus-word-pool" id="bbonus-active-${b.id}"></div>
             </div>
             <div>
-              <div class="bonus-col-head" style="color:var(--muted)">
-                Constructible Words
-                <span class="cnt" id="bpossible-cnt-${b.id}">0</span>
-              </div>
+              <div class="bonus-col-head" style="color:var(--muted)">Constructible Words <span class="cnt" id="bpossible-cnt-${b.id}">0</span></div>
               <div class="bonus-word-pool" id="bbonus-possible-${b.id}"></div>
             </div>
           </div>
@@ -1587,8 +1665,6 @@
         if (el) el.textContent = JSON.stringify(obj, null, 2);
       }
 
-      /* ── Bonus Word Logic ── */
-
       function getConstructibleWords(grid, rows, cols) {
         const found = new Set();
         const dirs = [
@@ -1655,12 +1731,10 @@
         const search = b.bonusSearch || "";
         const dictOnly = b.dictOnly;
         const dict = globalDict;
-
         const activeEl = document.getElementById("bbonus-active-" + id);
         const possibleEl = document.getElementById("bbonus-possible-" + id);
         const cntActive = document.getElementById("bbonus-cnt-" + id);
         const cntPossible = document.getElementById("bpossible-cnt-" + id);
-
         activeEl.innerHTML = "";
         b.bonusWords.forEach((word, i) => {
           const isValid = constructible.has(word.toUpperCase());
@@ -1677,15 +1751,6 @@
             renderBonusPanel(b);
             refreshGlobal();
           };
-          d.addEventListener("auxclick", (e) => {
-            if (e.button === 1) {
-              e.preventDefault();
-              window.open(
-                "https://www.dictionary.com/browse/" + word.toLowerCase(),
-                "_blank",
-              );
-            }
-          });
           d.addEventListener("contextmenu", (e) => {
             e.preventDefault();
             window.open(
@@ -1696,7 +1761,6 @@
           activeEl.appendChild(d);
         });
         if (cntActive) cntActive.textContent = b.bonusWords.length;
-
         let possible = Array.from(constructible)
           .filter((w) => {
             if (blocked.has(w)) return false;
@@ -1705,9 +1769,7 @@
             return true;
           })
           .sort();
-
         if (cntPossible) cntPossible.textContent = possible.length;
-
         possibleEl.innerHTML = "";
         possible.forEach((word) => {
           const inBonus = bonusSet.has(word);
@@ -1721,24 +1783,12 @@
             const idx = b.bonusWords.findIndex(
               (bw) => bw.toUpperCase() === word,
             );
-            if (idx > -1) {
-              b.bonusWords.splice(idx, 1);
-            } else {
-              b.bonusWords.push(word);
-            }
+            if (idx > -1) b.bonusWords.splice(idx, 1);
+            else b.bonusWords.push(word);
             buildBlockJSON(b);
             renderBonusPanel(b);
             refreshGlobal();
           };
-          d.addEventListener("auxclick", (e) => {
-            if (e.button === 1) {
-              e.preventDefault();
-              window.open(
-                "https://www.dictionary.com/browse/" + word.toLowerCase(),
-                "_blank",
-              );
-            }
-          });
           d.addEventListener("contextmenu", (e) => {
             e.preventDefault();
             window.open(
@@ -1755,9 +1805,7 @@
         if (!b || !b.json) return;
         navigator.clipboard
           .writeText(JSON.stringify(b.json, null, 2))
-          .then(() => {
-            showToast("JSON copied!");
-          });
+          .then(() => showToast("JSON copied!"));
       }
 
       function refreshGlobal() {
@@ -1780,11 +1828,6 @@
           .writeText(JSON.stringify({ data: all }, null, 2))
           .then(() => showToast("All JSON copied!"));
       }
-
-      addBlock(
-        "The nice thing about being a celebrity is that when you bore people they think it's their fault",
-      );
-      addBlock();
     </script>
   </body>
 </html>
