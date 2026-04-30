@@ -1573,7 +1573,7 @@
           const oi = b.words.findIndex(
             (w) => w.replace(/[^a-zA-Z]/g, "").toUpperCase() === p.word,
           );
-          return { index: oi + 1, x: p.sx, y: p.sy, direction: p.dir.n };
+          return { index: oi, x: p.sx, y: p.sy, direction: p.dir.n };
         });
         const obj = {
           quote_array: b.words,
